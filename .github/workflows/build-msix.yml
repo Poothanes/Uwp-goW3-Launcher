@@ -24,8 +24,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path ./runtime-payload/StartupContent -Force | Out-Null
           if (-not (Test-Path ./runtime-payload/StartupContent/gow3-probe.exe)) {
-            Write-Output "Downloading latest gow3-windows release from FelipePrado0/gow3_pc..."
-            Invoke-WebRequest -Uri "https://github.com/FelipePrado0/gow3_pc/releases/latest/download/gow3-windows.zip" -OutFile ./gow3-windows.zip
+            Write-Output "Downloading latest gow3-windows release from FelipePrado0/SpartanPort..."
+            Invoke-WebRequest -Uri "https://github.com/FelipePrado0/SpartanPort/releases/latest/download/gow3-windows.zip" -OutFile ./gow3-windows.zip
             Expand-Archive -Path ./gow3-windows.zip -DestinationPath ./gow3-extracted -Force
             $binDir = Get-ChildItem -Path ./gow3-extracted -Recurse -Directory -Filter "bin" | Select-Object -First 1
             Copy-Item -Path "$($binDir.FullName)\*" -Destination ./runtime-payload/StartupContent/ -Force
@@ -79,7 +79,7 @@ jobs:
           } | Select-Object -First 1
 
           if (-not $builtPkg) { throw "No built GoW3Installer package found in ./packages" }
-          $ext = $builtPkg.Extension
+          $ext =$builtPkg.Extension
           Copy-Item $builtPkg.FullName "./packages/UWP-GoW3-Launcher-1.0.0.0-x64$ext" -Force
           Write-Output "Built and signed: UWP-GoW3-Launcher-1.0.0.0-x64$ext"
 
