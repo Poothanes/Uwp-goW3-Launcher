@@ -1,0 +1,48 @@
+diff --git a/src/probe.c b/src/probe.c
+index 1111111..2222222 100644
+--- a/src/probe.c
++++ b/src/probe.c
+@@ -76,7 +76,12 @@ static void protect(void *p, size_t size, unsigned flags) {
+     if (flags & 1) mode = (flags & 2) ? PAGE_EXECUTE_READWRITE : PAGE_EXECUTE_READ;
+     else if (flags & 2) mode = PAGE_READWRITE;
+     else if (flags & 4) mode = PAGE_READONLY;
+-    if (!VirtualProtect(p, size, mode, &old)) fail("VirtualProtect failed");
++    if (!VirtualProtect(p, size, mode, &old)) {
++        /* On Xbox Series S/X UWP, ACG blocks dynamic PAGE_EXECUTE_* transitions unless loaded from a PE module. */
++        if ((flags & 1) && getenv("GOW3_MODULE_DLL")) {
++            fprintf(stderr, "WARN: VirtualProtect(exec) blocked by UWP ACG at %p; relying on GoW3StartupModule.dll\n", p);
++        } else fail("VirtualProtect failed");
++    }
+     FlushInstructionCache(GetCurrentProcess(), p, size);
+ #else
+     int mode = ((flags & 4) ? PROT_READ : 0) | ((flags & 2) ? PROT_WRITE : 0) | ((flags & 1) ? PROT_EXEC : 0);
+@@ -946,7 +951,16 @@ int main(int argc, char **argv) {
+     if (!isa_table && cpu_missing_sets) { printf("STOP: this CPU lacks %s and no rewrite table matches the image\n", missing); return 20; }
+     /* The stubs follow the image in the same low mapping (rel32 jmps reach them). */
+     size_t stub_area = isa_table ? round_page(isa_stub_area_size(isa_table)) : 0;
+-    image = allocate(round_page(size) + stub_area);
++    const char *module_dll = getenv("GOW3_MODULE_DLL");
++    HMODULE h_guest_dll = module_dll ? LoadLibraryExA(module_dll, NULL, DONT_RESOLVE_DLL_REFERENCES) : NULL;
++    if (h_guest_dll) {
++        image = (unsigned char *)h_guest_dll + 0x1000;
++        printf("Xbox UWP: loaded pre-linked PE64 module %s at %p (image=%p)\n", module_dll, (void *)h_guest_dll, (void *)image);
++    } else {
++        image = allocate(round_page(size) + stub_area);
++    }
+     unsigned char *stubs = image + round_page(size);
+     if (fread(image, 1, size, f) != size || fgetc(f) != EOF) fail("incorrect memory image size");
+     fclose(f);
+diff --git a/src/runtime_memory.c b/src/runtime_memory.c
+index 3333333..4444444 100644
+--- a/src/runtime_memory.c
++++ b/src/runtime_memory.c
+@@ -26,7 +26,7 @@
+ #define DIRECT_ALIGNMENT UINT64_C(0x4000)
+ #define PAGE_ALIGN UINT64_C(0x1000)
+ #define RETAIL_POOL_MB UINT64_C(5056)
+-#define MAX_POOL_MB UINT64_C(16384)
++#define MAX_POOL_MB UINT64_C(16384) /* Use GOW3_DMEM_MB=2560 on Xbox Series S */
+ #define FLEX_BASE UINT64_C(0x1080000000)
+-#define FLEX_SPAN (UINT64_C(1024)*1024*1024)
++#define FLEX_SPAN (getenv("GOW3_MODULE_DLL") ? (UINT64_C(256)*1024*1024) : (UINT64_C(1024)*1024*1024))
+ #define LOW_BASE  UINT64_C(0x10c0000000)

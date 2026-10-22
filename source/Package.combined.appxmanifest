@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="mp uap uap5 rescap">
+  <Identity Name="UWPGoW3Launcher" Publisher="CN=GoW3LauncherDev" Version="1.0.0.0" />
+  <mp:PhoneIdentity PhoneProductId="8a45d29a-7e4b-4f3d-9b2c-184e7d20c003" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Properties>
+    <DisplayName>UWP GoW3 Launcher</DisplayName>
+    <PublisherDisplayName>GoW3LauncherDev</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+    <TargetDeviceFamily Name="Windows.Xbox" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="GoW3Installer.App">
+      <uap:VisualElements DisplayName="God of War III Launcher" Square150x150Logo="Assets\Logo.png" Square44x44Logo="Assets\SmallLogo.png" Description="God of War III Remastered Xbox UWP Launcher and Wi-Fi Installer" BackgroundColor="#1A0E0E">
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="uwp-gow3-launcher">
+            <uap:DisplayName>UWP GoW3 Launcher</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
+        <uap5:Extension Category="windows.appExecutionAlias" Executable="GoW3Installer.exe" EntryPoint="GoW3Installer.App">
+          <uap5:AppExecutionAlias>
+            <uap5:ExecutionAlias Alias="GoW3Installer.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+    <Application Id="Game" Executable="StartupContent\GoW3NativeStartup.exe" EntryPoint="GoW3Runtime.App">
+      <uap:VisualElements DisplayName="God of War III Remastered" Square150x150Logo="Assets\Logo.png" Square44x44Logo="Assets\SmallLogo.png" Description="God of War III Remastered Xbox Series S/X Runtime Host" BackgroundColor="#000000" AppListEntry="none">
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="uwp-gow3-combined-game">
+            <uap:DisplayName>God of War III Combined Runtime</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <Capability Name="privateNetworkClientServer" />
+    <uap:Capability Name="removableStorage" />
+    <rescap:Capability Name="expandedResources" />
+    <rescap:Capability Name="packageManagement" />
+  </Capabilities>
+</Package>

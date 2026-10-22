@@ -1,0 +1,8 @@
+bin/
+obj/
+packages/
+runtime-payload/
+*.pfx
+*.cer
+*.msix
+*.appx

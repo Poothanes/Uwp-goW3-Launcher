@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>God of War III Remastered - Xbox Wi-Fi Transfer</title>
+<style>
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #120909;
+    color: #f4ece6;
+    margin: 0;
+    padding: 32px 20px;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #1f1111;
+    border: 1px solid #5a2323;
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  }
+  h1 {
+    margin: 0 0 8px 0;
+    color: #e5a93c;
+    font-size: 26px;
+  }
+  .subtitle {
+    color: #c9b4a9;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-top: 16px;
+    color: #f0d5b8;
+  }
+  input, button {
+    font-size: 16px;
+    padding: 12px 14px;
+    margin: 8px 0;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid #6e2d2d;
+    background: #2b1717;
+    color: #fff;
+  }
+  button {
+    background: linear-gradient(135deg, #b82929, #8c1919);
+    border: 1px solid #e5a93c;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.92; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  progress {
+    width: 100%;
+    height: 22px;
+    margin-top: 16px;
+    accent-color: #e5a93c;
+  }
+  #status {
+    background: #140a0a;
+    border: 1px solid #441c1c;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    color: #f5d38c;
+  }
+  .hint {
+    font-size: 13px;
+    color: #b59b8e;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>God of War III Remastered — Xbox Wi-Fi Transfer</h1>
+  <p class="subtitle">
+    Transfiere tu carpeta descomprimida de PS4 (<b>CUSA01715</b> / <b>CUSA01623</b>) directamente a tu Xbox Series S/X por red local sin duplicar espacio ni crear archivos .zip en tu PC.
+  </p>
+
+  <label for="code">1. Código de 6 dígitos que aparece en la pantalla de tu Xbox</label>
+  <input id="code" inputmode="numeric" maxlength="6" placeholder="Ej: 123456">
+
+  <label for="folder">2. Selecciona la carpeta del juego (CUSA01715 / CUSA01623)</label>
+  <input id="folder" type="file" webkitdirectory directory multiple>
+  <div class="hint">
+    Asegúrate de que contenga <code>eboot.bin</code>, <code>sce_sys/param.sfo</code>, <code>sce_module/libc.prx</code>, <code>sce_module/libSceFios2.prx</code> y <code>dvdroot_ps4/</code>.
+  </div>
+
+  <button id="send" onclick="sendFolder()">Enviar carpeta a Xbox Series S/X</button>
+  <progress id="bar" value="0" max="100"></progress>
+  <pre id="status">Esperando selección de carpeta...</pre>
+</main>
+<script>
+function normalize(raw) {
+  const parts = (raw || '').replace(/\\/g, '/').split('/').filter(Boolean);
+  return parts.length > 1 ? parts.slice(1).join('/') : parts.join('/');
+}
+function fmtBytes(b) {
+  if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
+  return (b / 1048576).toFixed(1) + ' MB';
+}
+async function sendFolder() {
+  const files = Array.from(document.getElementById('folder').files || []);
+  const code = document.getElementById('code').value.trim();
+  const status = document.getElementById('status');
+  const bar = document.getElementById('bar');
+  const btn = document.getElementById('send');
+  if (!files.length || code.length !== 6) {
+    status.textContent = 'Por favor selecciona la carpeta CUSA01715 e ingresa el código de 6 dígitos que muestra tu Xbox.';
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const byPath = new Map();
+    const manifest = [];
+    for (const file of files) {
+      const path = normalize(file.webkitRelativePath || file.name);
+      byPath.set(path.toLowerCase(), { path, file });
+      manifest.push({ path, size: file.size });
+    }
+    status.textContent = `Verificando estructura de carpeta (${manifest.length} archivos) con la Xbox...`;
+    let res = await fetch('/manifest', {
+      method: 'POST',
+      headers: { 'X-Transfer-Code': code, 'Content-Type': 'application/json' },
+      body: JSON.stringify(manifest)
+    });
+    if (!res.ok) {
+      status.textContent = 'Error en verificación: ' + await res.text();
+      btn.disabled = false;
+      return;
+    }
+    const plan = await res.json();
+    let total = 0, sent = 0;
+    for (const path of plan.files) {
+      const entry = byPath.get(path.toLowerCase());
+      if (entry) total += entry.file.size;
+    }
+    let idx = 0;
+    for (const path of plan.files) {
+      idx++;
+      const entry = byPath.get(path.toLowerCase());
+      const file = entry.file;
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', '/file?path=' + encodeURIComponent(path));
+        xhr.setRequestHeader('X-Transfer-Code', code);
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable && total > 0) {
+            const pct = Math.floor(((sent + e.loaded) * 100) / total);
+            bar.value = pct;
+            status.textContent = `[${idx}/${plan.files.length}] Enviando ${path}\n${fmtBytes(sent + e.loaded)} / ${fmtBytes(total)} (${pct}%)`;
+          }
+        };
+        xhr.onload = () => xhr.status === 200 ? resolve() : reject(xhr.responseText || ('HTTP ' + xhr.status));
+        xhr.onerror = () => reject('Fallo de conexión de red durante ' + path);
+        xhr.send(file);
+      });
+      sent += file.size;
+      bar.value = total > 0 ? Math.floor((sent * 100) / total) : 100;
+    }
+    status.textContent = 'Finalizando y verificando integridad en Xbox...';
+    res = await fetch('/complete', { method: 'POST', headers: { 'X-Transfer-Code': code } });
+    status.textContent = await res.text();
+  } catch (err) {
+    status.textContent = 'Error: ' + err;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

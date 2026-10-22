@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <ProjectGuid>{8A45D29A-7E4B-4F3D-9B2C-184E7D20C003}</ProjectGuid>
+    <OutputType>AppContainerExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GoW3Installer</RootNamespace>
+    <AssemblyName>GoW3Installer</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <RuntimeIdentifiers>win10-x64;win10-x64-aot</RuntimeIdentifiers>
+    <AppxBundle>Never</AppxBundle>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxPackageDir>$(MSBuildProjectDirectory)\..\packages\</AppxPackageDir>
+    <CombinedRuntimeBuild Condition="'$(CombinedRuntimeBuild)'==''">true</CombinedRuntimeBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+    <Use64BitCompiler>true</Use64BitCompiler>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="App.xaml.cs"><DependentUpon>App.xaml</DependentUpon></Compile>
+    <Compile Include="CombinedRuntime.cs" />
+    <Compile Include="FolderImportEngine.cs" />
+    <Compile Include="GamePreparation.cs" />
+    <Compile Include="GameStorage.cs" />
+    <Compile Include="GoW3PreparationEngine.cs" />
+    <Compile Include="GoW3Settings.cs" />
+    <Compile Include="ImportEngine.cs" />
+    <Compile Include="MainPage.xaml.cs"><DependentUpon>MainPage.xaml</DependentUpon></Compile>
+    <Compile Include="UsbFolderSource.cs" />
+    <Compile Include="WifiFolderTransfer.cs" />
+    <Compile Include="WifiProtocol.cs" />
+    <Compile Include="WifiReceiver.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" Condition="'$(CombinedRuntimeBuild)'!='true'">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+    <AppxManifest Include="Package.combined.appxmanifest" Condition="'$(CombinedRuntimeBuild)'=='true'">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+    <Content Include="Properties\Default.rd.xml" />
+    <Content Include="WifiTransfer.html" />
+    <Content Include="Patches\God_of_War_III_Remastered.xml">
+      <Link>Patches\God_of_War_III_Remastered.xml</Link>
+    </Content>
+    <Content Include="..\artwork\Logo.png"><Link>Assets\Logo.png</Link></Content>
+    <Content Include="..\artwork\SmallLogo.png"><Link>Assets\SmallLogo.png</Link></Content>
+    <Content Include="..\artwork\StoreLogo.png"><Link>Assets\StoreLogo.png</Link></Content>
+    <Content Include="..\artwork\SplashScreen.png"><Link>Assets\SplashScreen.png</Link></Content>
+  </ItemGroup>
+  <ItemGroup Condition="'$(CombinedRuntimeBuild)'=='true' and Exists('$(CombinedRuntimePayloadRoot)')">
+    <Content Include="$(CombinedRuntimePayloadRoot)\**\*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="MainPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
+      <Version>6.2.14</Version>
+    </PackageReference>
+    <PackageReference Include="QRCoder">
+      <Version>1.6.0</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+</Project>
